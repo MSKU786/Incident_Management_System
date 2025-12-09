@@ -15,6 +15,7 @@ User.hasMany(Incident, {
   foreignKey: 'reported_by',
   as: 'incidents',
 });
+
 Incident.belongsTo(User, {
   foreignKey: 'reported_by',
   as: 'reporter',

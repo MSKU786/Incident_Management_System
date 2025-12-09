@@ -126,13 +126,13 @@ incidentRoutes.delete('/:id', authMiddlware, async (req, res) => {
 incidentRoutes.post(
   '/:id/attachment',
   authMiddlware,
-  upload.single('image'),
+  upload.array('image', 10), // Accept multiple files (up to 10) with field name 'image'
   async (req, res) => {
-    console.log(req.file);
     try {
       const incidentId = req.params.id;
 
-      const incident = await Incident.findByPk(incidentRoutes);
+      // BUG FIX: Was using 'incidentRoutes' (the router object) instead of 'incidentId'
+      const incident = await Incident.findByPk(incidentId);
 
       if (!incident) {
         return res.status(404).json({
@@ -140,13 +140,15 @@ incidentRoutes.post(
         });
       }
 
+      // When using upload.array(), files are in req.files (plural) as an array
+      // When using upload.single(), file is in req.file (singular) as an object
       if (!req.files || req.files.length === 0) {
         return res.status(400).json({message: 'No files uploaded'});
       }
 
       const attachements = req.files.map((file) => ({
         incident_id: incidentId,
-        file_url: file.path,
+        file_url: file.path, // file.path contains the full path to the uploaded file
         comments: null,
       }));
 
@@ -157,7 +159,7 @@ incidentRoutes.post(
         uploaded: attachements.length,
       });
     } catch (err) {
-      console.error('Attachemtn uploaded error');
+      console.error('Attachment upload error', err);
       return res.status(500).json({message: 'server error'});
     }
   }
