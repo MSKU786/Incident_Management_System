@@ -9,46 +9,91 @@ const authRoutes = express.Router();
 
 const saltRounds = 10;
 
+// Validation helpers
+const validateEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const validatePassword = (password) => {
+  // At least 6 characters, can include letters, numbers, and special characters
+  return password && password.length >= 6;
+};
+
 authRoutes.post('/register', async (req, res) => {
   const {email, password, name, role} = req.body;
 
-  if (!email && !password) {
-    return res.status(400).json({message: 'Need email and password'});
+  // Validate required fields
+  if (!email || !password) {
+    return res.status(400).json({
+      message: 'Email and password are required',
+      errors: {
+        email: !email ? 'Email is required' : undefined,
+        password: !password ? 'Password is required' : undefined,
+      },
+    });
+  }
+
+  // Validate email format
+  if (!validateEmail(email)) {
+    return res.status(400).json({
+      message: 'Invalid email format',
+      errors: {
+        email: 'Please enter a valid email address',
+      },
+    });
+  }
+
+  // Validate password strength
+  if (!validatePassword(password)) {
+    return res.status(400).json({
+      message: 'Password does not meet requirements',
+      errors: {
+        password: 'Password must be at least 6 characters long',
+      },
+    });
   }
 
   try {
     const existingUser = await User.findOne({
-      where: {email},
+      where: {email: email.toLowerCase().trim()},
     });
 
     if (existingUser) {
-      return res.status(400).json({message: 'Email ALready exist'});
+      return res.status(400).json({
+        message: 'Email already exists',
+        errors: {
+          email: 'An account with this email already exists',
+        },
+      });
     }
 
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
     const user = await User.create({
-      email,
+      email: email.toLowerCase().trim(),
       passwordHash,
-      name,
+      name: name?.trim() || null,
       role: role || 'reporter',
     });
 
     const {token, refreshToken} = generateToken(user);
 
     res.status(201).json({
+      message: 'Registration successful',
       user: {
         id: user.user_id,
         email: user.email,
+        name: user.name,
         role: user.role,
       },
       token,
       refreshToken,
     });
   } catch (err) {
-    console.log(err);
+    console.error('Registration error:', err);
     res.status(500).json({
-      message: 'Sever error',
+      message: 'Server error. Please try again later.',
     });
   }
 });
@@ -77,9 +122,9 @@ authRoutes.post('/logout', authMiddlware, async (req, res) => {
       message: 'Logged out successfully',
     });
   } catch (err) {
-    console.log(err);
+    console.error('Logout error:', err);
     res.status(500).json({
-      message: 'Server error',
+      message: 'Server error. Please try again later.',
     });
   }
 });
@@ -146,9 +191,9 @@ authRoutes.post('/refresh-token', async (req, res) => {
       refreshToken: newRefreshToken,
     });
   } catch (err) {
-    console.log(err);
+    console.error('Refresh token error:', err);
     res.status(500).json({
-      message: 'Server error',
+      message: 'Server error. Please try again later.',
     });
   }
 });
@@ -156,40 +201,65 @@ authRoutes.post('/refresh-token', async (req, res) => {
 authRoutes.post('/login', async (req, res) => {
   const {email, password} = req.body;
 
-  if (!email && !password) {
-    return res.status(400).json({message: 'Need email and password'});
+  // Validate required fields
+  if (!email || !password) {
+    return res.status(400).json({
+      message: 'Email and password are required',
+      errors: {
+        email: !email ? 'Email is required' : undefined,
+        password: !password ? 'Password is required' : undefined,
+      },
+    });
+  }
+
+  // Validate email format
+  if (!validateEmail(email)) {
+    return res.status(400).json({
+      message: 'Invalid email format',
+      errors: {
+        email: 'Please enter a valid email address',
+      },
+    });
   }
 
   try {
     const user = await User.findOne({
-      where: {email},
+      where: {email: email.toLowerCase().trim()},
     });
 
+    // Use the same error message for both invalid email and password
+    // to prevent user enumeration attacks
     if (!user) {
-      return res.status(400).json({message: 'Invalid Credentials'});
+      return res.status(401).json({
+        message: 'Invalid email or password',
+      });
     }
 
     const passwordCheck = await bcrypt.compare(password, user.passwordHash);
 
     if (!passwordCheck) {
-      return res.status(400).json({message: 'Invalid Credentials'});
+      return res.status(401).json({
+        message: 'Invalid email or password',
+      });
     }
 
     const {token, refreshToken} = generateToken(user);
 
     res.status(200).json({
+      message: 'Login successful',
       user: {
         id: user.user_id,
         email: user.email,
+        name: user.name,
         role: user.role,
       },
       token,
       refreshToken,
     });
   } catch (err) {
-    console.log(err);
+    console.error('Login error:', err);
     res.status(500).json({
-      message: 'Sever error',
+      message: 'Server error. Please try again later.',
     });
   }
 });
