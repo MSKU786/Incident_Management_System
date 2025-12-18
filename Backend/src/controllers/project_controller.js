@@ -63,6 +63,16 @@ const updateProject = async (req, res) => {
   }
 };
 
+const getAllProjects = async (req, res) => {
+  try {
+    const projects = await Project.findAll();
+    return res.json(projects);
+  } catch (err) {
+    console.error('Get incidents error:', err);
+    return res.status(500).json({message: 'Server error'});
+  }
+};
+
 const deleteProject = async (req, res) => {
   try {
     const id = req.params.id;
@@ -79,4 +89,10 @@ const deleteProject = async (req, res) => {
   }
 };
 
-module.exports = {createPost, updateProject, getPostById, deleteProject};
+module.exports = {
+  createPost,
+  updateProject,
+  getPostById,
+  deleteProject,
+  getAllProjects,
+};

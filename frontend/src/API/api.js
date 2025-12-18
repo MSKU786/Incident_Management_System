@@ -51,7 +51,7 @@ axiosInstance.interceptors.response.use(
       if (isRefreshing) {
         // If already refreshing, queue this request
         return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
+          failedQueue.push({resolve, reject});
         })
           .then((token) => {
             originalRequest.headers.Authorization = `Bearer ${token}`;
@@ -82,7 +82,7 @@ axiosInstance.interceptors.response.use(
           refreshToken,
         });
 
-        const { token, refreshToken: newRefreshToken } = response.data;
+        const {token, refreshToken: newRefreshToken} = response.data;
 
         localStorage.setItem('token', token);
         if (newRefreshToken) {
@@ -129,7 +129,7 @@ export const api = {
 
   logout: () => {
     const refreshToken = localStorage.getItem('refreshToken');
-    return axiosInstance.post('/auth/logout', { refreshToken }).finally(() => {
+    return axiosInstance.post('/auth/logout', {refreshToken}).finally(() => {
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
@@ -137,7 +137,7 @@ export const api = {
   },
 
   refreshToken: (refreshToken) => {
-    return axiosInstance.post('/auth/refresh-token', { refreshToken });
+    return axiosInstance.post('/auth/refresh-token', {refreshToken});
   },
 
   createIncident: (data) => {
@@ -149,7 +149,31 @@ export const api = {
       params: filters,
     });
   },
+
+  // Add these project methods
+  getAllProjects: () => {
+    return axiosInstance.get('/projects/');
+  },
+
+  getProjectById: (id) => {
+    return axiosInstance.get(`/projects/${id}`);
+  },
+
+  createProject: (name, location) => {
+    return axiosInstance.post('/projects/', {
+      name,
+      location,
+    });
+  },
+
+  updateProject: (id, name, location) => {
+    return axiosInstance.put(`/projects/${id}`, {
+      name,
+      location,
+    });
+  },
+
+  deleteProject: (id) => {
+    return axiosInstance.delete(`/projects/${id}`);
+  },
 };
-
-
-

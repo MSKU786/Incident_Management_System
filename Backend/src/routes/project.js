@@ -6,6 +6,7 @@ const {
   getPostById,
   updateProject,
   deleteProject,
+  getAllProjects,
 } = require('../controllers/project_controller');
 const projectRoutes = express.Router();
 
@@ -30,6 +31,13 @@ projectRoutes.delete(
   authMiddlware,
   authorize('admin', 'manager'),
   deleteProject
+);
+
+projectRoutes.get(
+  '/',
+  authMiddlware,
+  authorize('admin', 'manager'),
+  getAllProjects
 );
 
 module.exports = {projectRoutes};
