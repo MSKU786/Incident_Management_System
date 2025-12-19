@@ -4,6 +4,7 @@ import Navbar from './Component/navbar';
 import LoginPage from './Pages/LoginPage';
 import IncidentCreatePage from './Pages/IncidentCreatePage';
 import ProtectedRoute from './Component/ProtectedRoute';
+import ProjectPage from './Pages/ProjectPage';
 import {useState, useEffect} from 'react';
 import {isAuthenticated} from './utils/auth';
 
@@ -95,7 +96,7 @@ function App() {
             >
               <div className="container mt-4">
                 <h2>Projects List</h2>
-                {/* Add projects list component here */}
+                <ProjectPage token={token} />
               </div>
             </ProtectedRoute>
           )}
