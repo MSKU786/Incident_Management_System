@@ -140,16 +140,6 @@ export const api = {
     return axiosInstance.post('/auth/refresh-token', {refreshToken});
   },
 
-  createIncident: (data) => {
-    return axiosInstance.post('/incidents/', data);
-  },
-
-  listIncidents: (filters) => {
-    return axiosInstance.get('/incidents/', {
-      params: filters,
-    });
-  },
-
   // Add these project methods
   getAllProjects: () => {
     return axiosInstance.get('/projects/');
@@ -175,5 +165,33 @@ export const api = {
 
   deleteProject: (id) => {
     return axiosInstance.delete(`/projects/${id}`);
+  },
+
+  createIncident: (data) => {
+    return axiosInstance.post('/incidents/', data);
+  },
+
+  listIncidents: (filters) => {
+    return axiosInstance.get('/incidents/', {
+      params: filters,
+    });
+  },
+
+  // Incident attachment methods
+  addIncidentAttachment: (incidentId, files) => {
+    const formData = new FormData();
+    // The backend expects files with field name 'image'
+    files.forEach((file) => {
+      formData.append('image', file);
+    });
+    return axiosInstance.post(`/incidents/${incidentId}/attachment`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  deleteIncident: (id) => {
+    return axiosInstance.delete(`/incidents/${id}`);
   },
 };
