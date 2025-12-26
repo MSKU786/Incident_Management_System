@@ -1,23 +1,18 @@
 import {useState, useEffect} from 'react';
-import {api} from '../API/api';
+import {api} from '../Api/api';
+import CreateIncidentModal from '../Component/CreateIncidentModal';
 
-export default function IncidentCreatePage({token}) {
+export default function IncidentPage({token}) {
   const [incidents, setIncidents] = useState([]);
   const [projects, setProjects] = useState([]);
-
-  const [loading, setLoading] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(' ');
-
-  const [title, setTitle] = useState('');
-  const [projectId, setProjectId] = useState('');
-  const [severity, setSeverity] = useState('');
-  const [files, setFiles] = useState([]);
-  const [incidentId, setIncidentId] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     fetchIncidents();
     fetchProjects();
-  });
+  }, []);
 
   const fetchProjects = async () => {
     try {
@@ -44,9 +39,58 @@ export default function IncidentCreatePage({token}) {
     }
   };
 
+  const handleDeleteIncident = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this incident?')) {
+      return;
+    }
+
+    try {
+      await api.deleteIncident(id);
+      await fetchIncidents();
+    } catch (err) {
+      alert(
+        err.response?.data?.message ||
+          'Failed to delete incident. Please try again.'
+      );
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+  };
+
+  const getSeverityBadgeClass = (severity) => {
+    switch (severity) {
+      case 'high':
+        return 'badge bg-danger';
+      case 'moderate':
+        return 'badge bg-warning';
+      case 'low':
+        return 'badge bg-info';
+      default:
+        return 'badge bg-secondary';
+    }
+  };
+
+  const getStatusBadgeClass = (status) => {
+    return status === 'open' ? 'badge bg-success' : 'badge bg-secondary';
+  };
+
   return (
     <div className="container mt-4">
-      {' '}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2>Incidents Dashboard</h2>
+        <button
+          className="btn btn-primary"
+          onClick={() => setShowCreateModal(true)}
+        >
+          <i className="bi bi-plus-circle me-2"></i>
+          Create New Incident
+        </button>
+      </div>
+
       {/* Error Message */}
       {error && (
         <div
@@ -56,6 +100,7 @@ export default function IncidentCreatePage({token}) {
           {error}
         </div>
       )}
+
       {/* Loading State */}
       {loading ? (
         <div className="text-center py-5">
@@ -136,6 +181,14 @@ export default function IncidentCreatePage({token}) {
           </div>
         </div>
       )}
+
+      {/* Create Incident Modal */}
+      <CreateIncidentModal
+        show={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={fetchIncidents}
+        projects={projects}
+      />
     </div>
   );
 }

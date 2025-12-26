@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {api} from '../api';
+import {api} from '../Api';
 import './LoginPage.css';
 
 export default function LoginPage({setToken, setPage}) {

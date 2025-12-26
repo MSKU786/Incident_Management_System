@@ -6,7 +6,7 @@ import {
   isAdminOrManager,
   logout,
 } from '../utility/auth';
-import {api} from '../api';
+import {api} from '../Api';
 
 export default function Navbar({setPage, token, setToken}) {
   if (!token) {

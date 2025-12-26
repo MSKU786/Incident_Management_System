@@ -1,5 +1,5 @@
 import {useState, useEffect} from 'react';
-import {api} from '../API/api';
+import {api} from '../Api/api';
 
 export default function ProjectPage({token}) {
   const [projects, setProjects] = useState([]);

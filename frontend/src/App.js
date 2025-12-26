@@ -4,6 +4,7 @@ import Navbar from './Component/navbar';
 import LoginPage from './Pages/LoginPage';
 import IncidentCreatePage from './Pages/IncidentCreatePage';
 import ProtectedRoute from './Component/ProtectedRoute';
+import IncidentPage from './Pages/IncidentPage';
 import ProjectPage from './Pages/ProjectPage';
 import {useState, useEffect} from 'react';
 import {isAuthenticated} from './utils/auth';
@@ -133,6 +134,17 @@ function App() {
               <div className="container mt-4">
                 <h2>User Profile</h2>
                 {/* Add profile component here */}
+              </div>
+            </ProtectedRoute>
+          )}
+
+          {page === 'incidents' && (
+            <ProtectedRoute
+              token={token}
+              setPage={handleSetPage}
+            >
+              <div className="container mt-4">
+                <IncidentPage token={token} />
               </div>
             </ProtectedRoute>
           )}
