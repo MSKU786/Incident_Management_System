@@ -12,7 +12,7 @@ import {isAuthenticated} from './utils/auth';
 function App() {
   const [page, setPage] = useState('login');
   const [token, setToken] = useState(localStorage.getItem('token'));
-
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
   // Check authentication on mount and redirect if needed
   useEffect(() => {
     if (isAuthenticated() && token) {
@@ -26,14 +26,28 @@ function App() {
     }
   }, [token]);
 
-  const handleSetPage = (newPage) => {
+  const handleSetPage = (newPage, params = {}) => {
     // Protect routes - if not authenticated, redirect to login
     if (!isAuthenticated() && newPage !== 'login') {
       setPage('login');
       return;
     }
+
+    if (newPage === 'incidents' && params.projectId) {
+      setSelectedProjectId(params.projectId);
+    } else if (newPage !== 'incidents') {
+      setSelectedProjectId(null);
+    }
     setPage(newPage);
   };
+
+  // Make setPage available globally for ProjectPage
+  useEffect(() => {
+    window.setPage = handleSetPage;
+    return () => {
+      delete window.setPage;
+    };
+  }, []);
 
   return (
     <div className="App">
@@ -144,7 +158,10 @@ function App() {
               setPage={handleSetPage}
             >
               <div className="container mt-4">
-                <IncidentPage token={token} />
+                <IncidentPage
+                  token={token}
+                  projectId={selectedProjectId}
+                />
               </div>
             </ProtectedRoute>
           )}

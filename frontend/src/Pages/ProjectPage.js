@@ -151,6 +151,20 @@ export default function ProjectPage({token}) {
                       <td>{project.location}</td>
                       <td>
                         <button
+                          className="btn btn-sm btn-primary me-2"
+                          onClick={() => {
+                            // Navigate to incidents page with project filter
+                            if (window.setPage) {
+                              window.setPage('incidents', {
+                                projectId: project.project_id,
+                              });
+                            }
+                          }}
+                        >
+                          <i className="bi bi-list-ul me-1"></i>
+                          View Incidents
+                        </button>
+                        <button
                           className="btn btn-sm btn-danger"
                           onClick={() =>
                             handleDeleteProject(project.project_id)
