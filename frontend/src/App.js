@@ -4,8 +4,8 @@ import LoginPage from './Pages/LoginPage';
 import ProtectedRoute from './Component/ProtectedRoute';
 import IncidentPage from './Pages/IncidentPage';
 import ProjectPage from './Pages/ProjectPage';
-import { useState, useEffect } from 'react';
-import { isAuthenticated } from './utility/auth';
+import {useState, useEffect} from 'react';
+import {isAuthenticated} from './utility/auth';
 
 function App() {
   const [page, setPage] = useState('login');
@@ -49,11 +49,14 @@ function App() {
 
   return (
     <div className="App">
-      <Navbar
-        setPage={handleSetPage}
-        token={token}
-        setToken={setToken}
-      />
+      {/* Only show Navbar when authenticated */}
+      {token && isAuthenticated() && (
+        <Navbar
+          setPage={handleSetPage}
+          token={token}
+          setToken={setToken}
+        />
+      )}
 
       {/* Login Page - No protection needed */}
       {page === 'login' && (

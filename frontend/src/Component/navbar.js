@@ -6,15 +6,17 @@ import {
   isAdminOrManager,
   logout,
 } from '../utility/auth';
-import { api } from '../Api/api';
+import {api} from '../Api/api';
 
-export default function Navbar({ setPage, token, setToken }) {
+export default function Navbar({setPage, token, setToken}) {
+  // Early return if no token
   if (!token) {
     return null;
   }
 
-  const userRole = getUserRole();
-  const userName = getUserName();
+  // Get user data safely
+  const userRole = getUserRole() || 'User';
+  const userName = getUserName() || 'User';
   const canManageProjects = isAdminOrManager();
   const canManageUsers = isAdmin();
 
@@ -30,16 +32,27 @@ export default function Navbar({ setPage, token, setToken }) {
     }
   };
 
+  const handleNavClick = (e, pageName) => {
+    e.preventDefault();
+    setPage(pageName);
+  };
+
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
       <div className="container-fluid">
-        <a
-          className="navbar-brand"
-          href="#"
-          onClick={() => setPage('dashboard')}
+        <button
+          className="navbar-brand btn btn-link text-white p-0"
+          onClick={(e) => handleNavClick(e, 'dashboard')}
+          style={{
+            border: 'none',
+            background: 'none',
+            textDecoration: 'none',
+            fontSize: '1.25rem',
+            fontWeight: 'bold',
+          }}
         >
           Incident Manager
-        </a>
+        </button>
 
         <button
           className="navbar-toggler"
@@ -62,7 +75,7 @@ export default function Navbar({ setPage, token, setToken }) {
             <li className="nav-item">
               <button
                 className="nav-link btn btn-link text-white"
-                onClick={() => setPage('dashboard')}
+                onClick={(e) => handleNavClick(e, 'dashboard')}
                 style={{
                   border: 'none',
                   background: 'none',
@@ -77,7 +90,7 @@ export default function Navbar({ setPage, token, setToken }) {
             <li className="nav-item">
               <button
                 className="nav-link btn btn-link text-white"
-                onClick={() => setPage('incidents')}
+                onClick={(e) => handleNavClick(e, 'incidents')}
                 style={{
                   border: 'none',
                   background: 'none',
@@ -92,7 +105,7 @@ export default function Navbar({ setPage, token, setToken }) {
             <li className="nav-item">
               <button
                 className="nav-link btn btn-link text-white"
-                onClick={() => setPage('create')}
+                onClick={(e) => handleNavClick(e, 'create')}
                 style={{
                   border: 'none',
                   background: 'none',
@@ -108,7 +121,7 @@ export default function Navbar({ setPage, token, setToken }) {
               <li className="nav-item">
                 <button
                   className="nav-link btn btn-link text-white"
-                  onClick={() => setPage('projects')}
+                  onClick={(e) => handleNavClick(e, 'projects')}
                   style={{
                     border: 'none',
                     background: 'none',
@@ -125,7 +138,7 @@ export default function Navbar({ setPage, token, setToken }) {
               <li className="nav-item">
                 <button
                   className="nav-link btn btn-link text-white"
-                  onClick={() => setPage('create-project')}
+                  onClick={(e) => handleNavClick(e, 'create-project')}
                   style={{
                     border: 'none',
                     background: 'none',
@@ -142,7 +155,7 @@ export default function Navbar({ setPage, token, setToken }) {
               <li className="nav-item">
                 <button
                   className="nav-link btn btn-link text-white"
-                  onClick={() => setPage('users')}
+                  onClick={(e) => handleNavClick(e, 'users')}
                   style={{
                     border: 'none',
                     background: 'none',
@@ -161,9 +174,10 @@ export default function Navbar({ setPage, token, setToken }) {
               <button
                 className="nav-link dropdown-toggle btn btn-link text-white"
                 id="navbarDropdown"
+                type="button"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
-                style={{ border: 'none', background: 'none' }}
+                style={{border: 'none', background: 'none'}}
               >
                 {userName} ({userRole})
               </button>
@@ -174,7 +188,7 @@ export default function Navbar({ setPage, token, setToken }) {
                 <li>
                   <button
                     className="dropdown-item"
-                    onClick={() => setPage('profile')}
+                    onClick={(e) => handleNavClick(e, 'profile')}
                   >
                     Profile
                   </button>
