@@ -1,6 +1,6 @@
-import {authAPI} from './Api/auth';
-import {projectsAPI} from './Api/projects';
-import {incidentsAPI} from './Api/incident';
+import { authAPI } from './auth';
+import { projectsAPI } from './projects';
+import { incidentsAPI } from './incident';
 
 export const api = {
   // Auth methods

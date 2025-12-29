@@ -1,5 +1,5 @@
 export const getUser = () => {
-  const userStr = localStorage.get('user');
+  const userStr = localStorage.getItem('user');
   if (!userStr) {
     return null;
   }

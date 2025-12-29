@@ -1,8 +1,8 @@
-import {useState} from 'react';
-import {api} from '../Api';
+import { useState } from 'react';
+import { api } from '../Api/api';
 import './LoginPage.css';
 
-export default function LoginPage({setToken, setPage}) {
+export default function LoginPage({ setToken, setPage }) {
   // Login state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -91,7 +91,7 @@ export default function LoginPage({setToken, setPage}) {
     try {
       const res = await api.login(email, password);
 
-      const {token, refreshToken, user} = res.data;
+      const { token, refreshToken, user } = res.data;
 
       // Store tokens securely
       localStorage.setItem('token', token);
@@ -132,7 +132,7 @@ export default function LoginPage({setToken, setPage}) {
         signupRole
       );
 
-      const {token, refreshToken, user} = res.data;
+      const { token, refreshToken, user } = res.data;
 
       // Store tokens securely
       localStorage.setItem('token', token);
@@ -200,7 +200,7 @@ export default function LoginPage({setToken, setPage}) {
                 onChange={(e) => {
                   setEmail(e.target.value);
                   if (loginErrors.email) {
-                    setLoginErrors({...loginErrors, email: ''});
+                    setLoginErrors({ ...loginErrors, email: '' });
                   }
                 }}
                 disabled={loginLoading}
@@ -230,7 +230,7 @@ export default function LoginPage({setToken, setPage}) {
                   onChange={(e) => {
                     setPassword(e.target.value);
                     if (loginErrors.password) {
-                      setLoginErrors({...loginErrors, password: ''});
+                      setLoginErrors({ ...loginErrors, password: '' });
                     }
                   }}
                   disabled={loginLoading}
@@ -303,7 +303,7 @@ export default function LoginPage({setToken, setPage}) {
                 onChange={(e) => {
                   setSignupName(e.target.value);
                   if (signupErrors.name) {
-                    setSignupErrors({...signupErrors, name: ''});
+                    setSignupErrors({ ...signupErrors, name: '' });
                   }
                 }}
                 disabled={signupLoading}
@@ -332,7 +332,7 @@ export default function LoginPage({setToken, setPage}) {
                 onChange={(e) => {
                   setSignupEmail(e.target.value);
                   if (signupErrors.email) {
-                    setSignupErrors({...signupErrors, email: ''});
+                    setSignupErrors({ ...signupErrors, email: '' });
                   }
                 }}
                 disabled={signupLoading}
@@ -362,7 +362,7 @@ export default function LoginPage({setToken, setPage}) {
                   onChange={(e) => {
                     setSignupPassword(e.target.value);
                     if (signupErrors.password) {
-                      setSignupErrors({...signupErrors, password: ''});
+                      setSignupErrors({ ...signupErrors, password: '' });
                     }
                   }}
                   disabled={signupLoading}
@@ -403,7 +403,7 @@ export default function LoginPage({setToken, setPage}) {
                   onChange={(e) => {
                     setSignupConfirmPassword(e.target.value);
                     if (signupErrors.confirmPassword) {
-                      setSignupErrors({...signupErrors, confirmPassword: ''});
+                      setSignupErrors({ ...signupErrors, confirmPassword: '' });
                     }
                   }}
                   disabled={signupLoading}

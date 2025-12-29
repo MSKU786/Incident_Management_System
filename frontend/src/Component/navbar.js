@@ -6,9 +6,9 @@ import {
   isAdminOrManager,
   logout,
 } from '../utility/auth';
-import {api} from '../Api';
+import { api } from '../Api/api';
 
-export default function Navbar({setPage, token, setToken}) {
+export default function Navbar({ setPage, token, setToken }) {
   if (!token) {
     return null;
   }
@@ -163,7 +163,7 @@ export default function Navbar({setPage, token, setToken}) {
                 id="navbarDropdown"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
-                style={{border: 'none', background: 'none'}}
+                style={{ border: 'none', background: 'none' }}
               >
                 {userName} ({userRole})
               </button>

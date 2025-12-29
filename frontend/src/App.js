@@ -1,13 +1,11 @@
-import logo from './logo.svg';
 import './App.css';
-import Navbar from './Component/navbar';
+import Navbar from './Component/Navbar';
 import LoginPage from './Pages/LoginPage';
-import IncidentCreatePage from './Pages/IncidentCreatePage';
 import ProtectedRoute from './Component/ProtectedRoute';
 import IncidentPage from './Pages/IncidentPage';
 import ProjectPage from './Pages/ProjectPage';
-import {useState, useEffect} from 'react';
-import {isAuthenticated} from './utils/auth';
+import { useState, useEffect } from 'react';
+import { isAuthenticated } from './utility/auth';
 
 function App() {
   const [page, setPage] = useState('login');
@@ -77,17 +75,6 @@ function App() {
                 <h2>Dashboard</h2>
                 <p>Welcome to the Incident Management Dashboard</p>
                 {/* Add dashboard content here */}
-              </div>
-            </ProtectedRoute>
-          )}
-
-          {page === 'create' && (
-            <ProtectedRoute
-              token={token}
-              setPage={handleSetPage}
-            >
-              <div className="container mt-4">
-                <IncidentCreatePage token={token} />
               </div>
             </ProtectedRoute>
           )}
