@@ -1,162 +1,169 @@
 import './App.css';
+import {Routes, Route, Navigate, useLocation} from 'react-router-dom';
 import Navbar from './Component/Navbar';
 import LoginPage from './Pages/LoginPage';
 import ProtectedRoute from './Component/ProtectedRoute';
 import IncidentPage from './Pages/IncidentPage';
 import ProjectPage from './Pages/ProjectPage';
-import {useState, useEffect} from 'react';
-import {isAuthenticated} from './utility/auth';
+import {useAuth} from './contexts/AuthContext';
+
+function Dashboard() {
+  return (
+    <div className="container mt-4">
+      <h2>Dashboard</h2>
+      <p>Welcome to the Incident Management Dashboard</p>
+      {/* Add dashboard content here */}
+    </div>
+  );
+}
+
+function CreateProject() {
+  return (
+    <div className="container mt-4">
+      <h2>Create Project</h2>
+      {/* Add create project component here */}
+    </div>
+  );
+}
+
+function UsersManagement() {
+  return (
+    <div className="container mt-4">
+      <h2>Users Management</h2>
+      {/* Add users management component here */}
+    </div>
+  );
+}
+
+function UserProfile() {
+  return (
+    <div className="container mt-4">
+      <h2>User Profile</h2>
+      {/* Add profile component here */}
+    </div>
+  );
+}
 
 function App() {
-  const [page, setPage] = useState('login');
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [selectedProjectId, setSelectedProjectId] = useState(null);
-  // Check authentication on mount and redirect if needed
-  useEffect(() => {
-    if (isAuthenticated() && token) {
-      // If authenticated but on login page, redirect to dashboard
-      if (page === 'login') {
-        setPage('dashboard');
-      }
-    } else {
-      // If not authenticated, ensure we're on login page
-      setPage('login');
-    }
-  }, [token]);
+  const {isAuthenticated, loading} = useAuth();
+  const location = useLocation();
 
-  const handleSetPage = (newPage, params = {}) => {
-    // Protect routes - if not authenticated, redirect to login
-    if (!isAuthenticated() && newPage !== 'login') {
-      setPage('login');
-      return;
-    }
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <div
+          className="spinner-border text-primary"
+          role="status"
+        >
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
-    if (newPage === 'incidents' && params.projectId) {
-      setSelectedProjectId(params.projectId);
-    } else if (newPage !== 'incidents') {
-      setSelectedProjectId(null);
-    }
-    setPage(newPage);
-  };
-
-  // Make setPage available globally for ProjectPage
-  useEffect(() => {
-    window.setPage = handleSetPage;
-    return () => {
-      delete window.setPage;
-    };
-  }, []);
+  // Determine if current route requires authentication
+  const isAuthRoute = location.pathname === '/login';
+  const shouldShowNavbar = isAuthenticated() && !isAuthRoute;
 
   return (
     <div className="App">
-      {/* Only show Navbar when authenticated */}
-      {token && isAuthenticated() && (
-        <Navbar
-          setPage={handleSetPage}
-          token={token}
-          setToken={setToken}
+      {/* Show Navbar when authenticated and not on login page */}
+      {shouldShowNavbar && <Navbar />}
+
+      <Routes>
+        {/* Public Routes */}
+        <Route
+          path="/login"
+          element={
+            isAuthenticated() ? (
+              <Navigate
+                to="/dashboard"
+                replace
+              />
+            ) : (
+              <LoginPage />
+            )
+          }
         />
-      )}
 
-      {/* Login Page - No protection needed */}
-      {page === 'login' && (
-        <LoginPage
-          setToken={setToken}
-          setPage={handleSetPage}
+        {/* Protected Routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
         />
-      )}
 
-      {/* Protected Routes */}
-      {token && (
-        <>
-          {page === 'dashboard' && (
-            <ProtectedRoute
-              token={token}
-              setPage={handleSetPage}
-            >
-              <div className="container mt-4">
-                <h2>Dashboard</h2>
-                <p>Welcome to the Incident Management Dashboard</p>
-                {/* Add dashboard content here */}
-              </div>
+        <Route
+          path="/incidents"
+          element={
+            <ProtectedRoute>
+              <IncidentPage />
             </ProtectedRoute>
-          )}
+          }
+        />
 
-          {page === 'incidents' && (
-            <ProtectedRoute
-              token={token}
-              setPage={handleSetPage}
-            >
-              <div className="container mt-4">
-                <h2>Incidents List</h2>
-                {/* Add incidents list component here */}
-              </div>
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute>
+              <ProjectPage />
             </ProtectedRoute>
-          )}
+          }
+        />
 
-          {page === 'projects' && (
-            <ProtectedRoute
-              token={token}
-              setPage={handleSetPage}
-            >
-              <div className="container mt-4">
-                <h2>Projects List</h2>
-                <ProjectPage token={token} />
-              </div>
+        <Route
+          path="/create-project"
+          element={
+            <ProtectedRoute>
+              <CreateProject />
             </ProtectedRoute>
-          )}
+          }
+        />
 
-          {page === 'create-project' && (
-            <ProtectedRoute
-              token={token}
-              setPage={handleSetPage}
-            >
-              <div className="container mt-4">
-                <h2>Create Project</h2>
-                {/* Add create project component here */}
-              </div>
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <UsersManagement />
             </ProtectedRoute>
-          )}
+          }
+        />
 
-          {page === 'users' && (
-            <ProtectedRoute
-              token={token}
-              setPage={handleSetPage}
-            >
-              <div className="container mt-4">
-                <h2>Users Management</h2>
-                {/* Add users management component here */}
-              </div>
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <UserProfile />
             </ProtectedRoute>
-          )}
+          }
+        />
 
-          {page === 'profile' && (
-            <ProtectedRoute
-              token={token}
-              setPage={handleSetPage}
-            >
-              <div className="container mt-4">
-                <h2>User Profile</h2>
-                {/* Add profile component here */}
-              </div>
-            </ProtectedRoute>
-          )}
+        {/* Default redirect */}
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to={isAuthenticated() ? '/dashboard' : '/login'}
+              replace
+            />
+          }
+        />
 
-          {page === 'incidents' && (
-            <ProtectedRoute
-              token={token}
-              setPage={handleSetPage}
-            >
-              <div className="container mt-4">
-                <IncidentPage
-                  token={token}
-                  projectId={selectedProjectId}
-                />
-              </div>
-            </ProtectedRoute>
-          )}
-        </>
-      )}
+        {/* 404 - redirect to dashboard or login */}
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to={isAuthenticated() ? '/dashboard' : '/login'}
+              replace
+            />
+          }
+        />
+      </Routes>
     </div>
   );
 }

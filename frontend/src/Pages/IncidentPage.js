@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react';
-import { api } from '../Api/api';
+import {useState, useEffect} from 'react';
+import {useSearchParams} from 'react-router-dom';
+import {api} from '../Api/api';
 import CreateIncidentModal from '../Component/CreateIncidentModal';
 
-export default function IncidentPage({ token }) {
+export default function IncidentPage() {
+  const [searchParams] = useSearchParams();
+  const projectId = searchParams.get('projectId');
   const [incidents, setIncidents] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);

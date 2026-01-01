@@ -1,7 +1,19 @@
 import React from 'react';
-import {isAuthenticated} from '../utility/auth';
+import {Navigate} from 'react-router-dom';
+import {useAuth} from '../contexts/AuthContext';
 
-export default function ProtectedRoute({children, token, setPage}) {
-  if (!isAuthenticated() || !token) {
+export default function ProtectedRoute({children}) {
+  const {isAuthenticated} = useAuth();
+
+  if (!isAuthenticated()) {
+    // Redirect to login if not authenticated
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
   }
+
+  return children;
 }

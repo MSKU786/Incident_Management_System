@@ -1,18 +1,17 @@
 import React from 'react';
+import {useNavigate, useLocation} from 'react-router-dom';
 import {
   getUserName,
   getUserRole,
   isAdmin,
   isAdminOrManager,
-  logout,
 } from '../utility/auth';
-import {api} from '../Api/api';
+import {useAuth} from '../contexts/AuthContext';
 
-export default function Navbar({setPage, token, setToken}) {
-  // Early return if no token
-  if (!token) {
-    return null;
-  }
+export default function Navbar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const {logout} = useAuth();
 
   // Get user data safely
   const userRole = getUserRole() || 'User';
@@ -21,20 +20,18 @@ export default function Navbar({setPage, token, setToken}) {
   const canManageUsers = isAdmin();
 
   const handleLogout = async () => {
-    try {
-      await api.logout();
-    } catch (err) {
-      console.log('Logout error', err);
-    } finally {
-      logout();
-      setToken(null);
-      setPage('login');
-    }
+    await logout();
+    navigate('/login');
   };
 
-  const handleNavClick = (e, pageName) => {
+  const handleNavClick = (e, path) => {
     e.preventDefault();
-    setPage(pageName);
+    navigate(path);
+  };
+
+  // Helper to check if a route is active
+  const isActive = (path) => {
+    return location.pathname === path;
   };
 
   return (
@@ -42,7 +39,7 @@ export default function Navbar({setPage, token, setToken}) {
       <div className="container-fluid">
         <button
           className="navbar-brand btn btn-link text-white p-0"
-          onClick={(e) => handleNavClick(e, 'dashboard')}
+          onClick={(e) => handleNavClick(e, '/dashboard')}
           style={{
             border: 'none',
             background: 'none',
@@ -74,8 +71,10 @@ export default function Navbar({setPage, token, setToken}) {
             {/* Dashboard - All authenticated users */}
             <li className="nav-item">
               <button
-                className="nav-link btn btn-link text-white"
-                onClick={(e) => handleNavClick(e, 'dashboard')}
+                className={`nav-link btn btn-link text-white ${
+                  isActive('/dashboard') ? 'active' : ''
+                }`}
+                onClick={(e) => handleNavClick(e, '/dashboard')}
                 style={{
                   border: 'none',
                   background: 'none',
@@ -89,8 +88,10 @@ export default function Navbar({setPage, token, setToken}) {
             {/* Incidents - All authenticated users */}
             <li className="nav-item">
               <button
-                className="nav-link btn btn-link text-white"
-                onClick={(e) => handleNavClick(e, 'incidents')}
+                className={`nav-link btn btn-link text-white ${
+                  isActive('/incidents') ? 'active' : ''
+                }`}
+                onClick={(e) => handleNavClick(e, '/incidents')}
                 style={{
                   border: 'none',
                   background: 'none',
@@ -101,27 +102,14 @@ export default function Navbar({setPage, token, setToken}) {
               </button>
             </li>
 
-            {/* Create Incident - All authenticated users */}
-            <li className="nav-item">
-              <button
-                className="nav-link btn btn-link text-white"
-                onClick={(e) => handleNavClick(e, 'create')}
-                style={{
-                  border: 'none',
-                  background: 'none',
-                  textDecoration: 'none',
-                }}
-              >
-                Create Incident
-              </button>
-            </li>
-
             {/* Projects - Admin and Manager only */}
             {canManageProjects && (
               <li className="nav-item">
                 <button
-                  className="nav-link btn btn-link text-white"
-                  onClick={(e) => handleNavClick(e, 'projects')}
+                  className={`nav-link btn btn-link text-white ${
+                    isActive('/projects') ? 'active' : ''
+                  }`}
+                  onClick={(e) => handleNavClick(e, '/projects')}
                   style={{
                     border: 'none',
                     background: 'none',
@@ -137,8 +125,10 @@ export default function Navbar({setPage, token, setToken}) {
             {canManageProjects && (
               <li className="nav-item">
                 <button
-                  className="nav-link btn btn-link text-white"
-                  onClick={(e) => handleNavClick(e, 'create-project')}
+                  className={`nav-link btn btn-link text-white ${
+                    isActive('/create-project') ? 'active' : ''
+                  }`}
+                  onClick={(e) => handleNavClick(e, '/create-project')}
                   style={{
                     border: 'none',
                     background: 'none',
@@ -154,8 +144,10 @@ export default function Navbar({setPage, token, setToken}) {
             {canManageUsers && (
               <li className="nav-item">
                 <button
-                  className="nav-link btn btn-link text-white"
-                  onClick={(e) => handleNavClick(e, 'users')}
+                  className={`nav-link btn btn-link text-white ${
+                    isActive('/users') ? 'active' : ''
+                  }`}
+                  onClick={(e) => handleNavClick(e, '/users')}
                   style={{
                     border: 'none',
                     background: 'none',
@@ -188,7 +180,7 @@ export default function Navbar({setPage, token, setToken}) {
                 <li>
                   <button
                     className="dropdown-item"
-                    onClick={(e) => handleNavClick(e, 'profile')}
+                    onClick={(e) => handleNavClick(e, '/profile')}
                   >
                     Profile
                   </button>

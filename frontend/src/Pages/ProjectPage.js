@@ -1,7 +1,9 @@
 import {useState, useEffect} from 'react';
+import {useNavigate} from 'react-router-dom';
 import {api} from '../Api/api';
 
-export default function ProjectPage({token}) {
+export default function ProjectPage() {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(' ');
@@ -154,11 +156,9 @@ export default function ProjectPage({token}) {
                           className="btn btn-sm btn-primary me-2"
                           onClick={() => {
                             // Navigate to incidents page with project filter
-                            if (window.setPage) {
-                              window.setPage('incidents', {
-                                projectId: project.project_id,
-                              });
-                            }
+                            navigate(
+                              `/incidents?projectId=${project.project_id}`
+                            );
                           }}
                         >
                           <i className="bi bi-list-ul me-1"></i>
