@@ -1,7 +1,10 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || 'TtwEOeNGvbNnZZ0Dp6ksimcLUcd42PKu9YEq5FF6nYP';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
 const JWT_EXPIRY = '15m';
 const JWT_REFRESH_EXPIRY = '7d';
 

@@ -7,8 +7,8 @@ const sequelize = new Sequelize({
 });
 
 const connectDB = async () => {
-  // Synchronize
-  sequelize.sync();
+  // Synchronize database schema
+  await sequelize.sync();
 
   await sequelize.authenticate();
   console.log('Connected to DB');

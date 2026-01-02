@@ -40,19 +40,51 @@ const createIncident = async (req, res) => {
 
 const getIncidents = async (req, res) => {
   try {
-    const {project_id, severity} = req.query;
+    const {project_id, severity, status, page, limit: limitParam} = req.query;
 
     const where = {};
 
     if (project_id) where.project_id = project_id;
     if (severity) where.severity = severity;
+    if (status) where.status = status;
 
-    const incidents = await Incident.findAll({
+    // If user is reporter, only show their incidents
+    if (req.user.role === 'reporter') {
+      where.reported_by = req.user.id;
+    }
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limitParam) || 10;
+    const offset = (pageNum - 1) * limitNum;
+
+    const {count, rows: incidents} = await Incident.findAndCountAll({
       where,
+      limit: limitNum,
+      offset,
       order: [['incident_id', 'DESC']],
+      include: [
+        {
+          model: User,
+          as: 'reporter',
+          attributes: ['user_id', 'name', 'email'],
+        },
+        {
+          model: Project,
+          as: 'projects',
+          attributes: ['project_id', 'project_name', 'location'],
+        },
+      ],
     });
 
-    return res.json(incidents);
+    return res.json({
+      incidents,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: count,
+        totalPages: Math.ceil(count / limitNum),
+      },
+    });
   } catch (err) {
     console.error('Get incidents error:', err);
     return res.status(500).json({message: 'Server error'});

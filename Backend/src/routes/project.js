@@ -2,7 +2,7 @@ const express = require('express');
 const authMiddlware = require('../middleware/auth');
 const authorize = require('../middleware/authorize');
 const {
-  createPost,
+  createProject,
   getPostById,
   updateProject,
   deleteProject,
@@ -14,7 +14,7 @@ projectRoutes.post(
   '/',
   authMiddlware,
   authorize('admin', 'manager'),
-  createPost
+  createProject
 );
 
 projectRoutes.get('/:id', authMiddlware, getPostById);

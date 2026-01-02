@@ -21,7 +21,6 @@ incidentRoutes.get('/:id', authMiddlware, getIncidentById);
 incidentRoutes.post(
   '/',
   authMiddlware,
-  authorize('admin', 'manager'),
   createIncident
 );
 
