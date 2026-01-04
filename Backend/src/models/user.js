@@ -29,7 +29,7 @@ module.exports = () => {
     },
     {
       tableName: 'users',
-      timestamps: true,
+      timesstamps: true,
     }
   );
   return User;

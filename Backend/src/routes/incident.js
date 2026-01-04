@@ -11,16 +11,22 @@ const {
   addIncidentAttachment,
   updateMetaIncident,
 } = require('../controllers/incident_controller');
+const {
+  validateIncidentId,
+  validateCreateIncident,
+} = require('../middleware/validators/incidentValidators');
 
 const incidentRoutes = express.Router();
 
-incidentRoutes.get('/', authMiddlware, getIncidents);
+incidentRoutes.get('/', authMiddlware, validateIncidentId, getIncidents);
 
-incidentRoutes.get('/:id', authMiddlware, getIncidentById);
+incidentRoutes.get('/:id', authMiddlware, validateIncidentId, getIncidentById);
 
 incidentRoutes.post(
   '/',
   authMiddlware,
+  authorize('admin', 'manager'),
+  validateCreateIncident,
   createIncident
 );
 
@@ -28,12 +34,14 @@ incidentRoutes.delete(
   '/:id',
   authMiddlware,
   authorize('admin', 'manager'),
+  validateIncidentId,
   deleteIncident
 );
 
 incidentRoutes.post(
   '/:id/attachment',
   authMiddlware,
+  validateIncidentId,
   upload.array('image', 10), // Accept multiple files (up to 10) with field name 'image',
   addIncidentAttachment
 );
@@ -41,6 +49,7 @@ incidentRoutes.post(
 incidentRoutes.put(
   '/:id',
   authMiddlware,
+  validateUpdateIncident,
   authorize('admin', 'manager'),
   updateMetaIncident
 );

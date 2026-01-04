@@ -21,7 +21,7 @@ module.exports = () => {
     },
     {
       tableName: 'projects',
-      timestamps: true,
+      timesstamps: true,
     }
   );
   return Project;

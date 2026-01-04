@@ -12,32 +12,6 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, {recursive: true});
 }
 
-// File type validation
-const allowedMimeTypes = [
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'application/pdf',
-  'text/plain',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-];
-
-const fileFilter = (req, file, cb) => {
-  if (allowedMimeTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(
-      new Error(
-        `Invalid file type. Allowed types: ${allowedMimeTypes.join(', ')}`
-      ),
-      false
-    );
-  }
-};
-
 // Configure storage engine and filename
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
@@ -49,17 +23,7 @@ const storage = multer.diskStorage({
   },
 });
 
-// Configure multer with file size limit (5MB default, configurable via env)
-const maxFileSize = parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024; // 5MB
-
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: {
-    fileSize: maxFileSize,
-    files: 10, // Maximum number of files
-  },
-});
+const upload = multer({storage});
 
 // Save references to original multer methods BEFORE we override them
 // This prevents infinite recursion when we wrap them
@@ -82,17 +46,12 @@ const handleUpload = (uploadMiddleware) => {
         }
         if (err.code === 'LIMIT_FILE_SIZE') {
           return res.status(400).json({
-            message: `File too large. Maximum size is ${maxFileSize / 1024 / 1024}MB`,
+            message: 'File too large',
           });
         }
         if (err.code === 'LIMIT_FILE_COUNT') {
           return res.status(400).json({
             message: 'Too many files. Maximum is 10 files.',
-          });
-        }
-        if (err.message.includes('Invalid file type')) {
-          return res.status(400).json({
-            message: err.message,
           });
         }
         return res.status(400).json({

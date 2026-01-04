@@ -16,8 +16,7 @@ module.exports = () => {
         primaryKey: true,
       },
       incident_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
+        type: DataTypes.STRING(80),
       },
       file_url: {
         type: DataTypes.STRING(80),
@@ -33,7 +32,7 @@ module.exports = () => {
     },
     {
       tableName: 'incident_attachments',
-      timestamps: false,
+      timesstamps: false,
     }
   );
   return IncidentAttachment;
