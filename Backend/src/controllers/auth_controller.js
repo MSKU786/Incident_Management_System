@@ -6,17 +6,6 @@ const {addToBlacklist, isBlacklisted} = require('../utils/tokenBlacklist');
 
 const saltRounds = 10;
 
-// Validation helpers
-const validateEmail = (email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
-const validatePassword = (password) => {
-  // At least 6 characters, can include letters, numbers, and special characters
-  return password && password.length >= 6;
-};
-
 /**
  * Register a new user
  */
@@ -30,26 +19,6 @@ const register = async (req, res) => {
       errors: {
         email: !email ? 'Email is required' : undefined,
         password: !password ? 'Password is required' : undefined,
-      },
-    });
-  }
-
-  // Validate email format
-  if (!validateEmail(email)) {
-    return res.status(400).json({
-      message: 'Invalid email format',
-      errors: {
-        email: 'Please enter a valid email address',
-      },
-    });
-  }
-
-  // Validate password strength
-  if (!validatePassword(password)) {
-    return res.status(400).json({
-      message: 'Password does not meet requirements',
-      errors: {
-        password: 'Password must be at least 6 characters long',
       },
     });
   }
@@ -111,16 +80,6 @@ const login = async (req, res) => {
       errors: {
         email: !email ? 'Email is required' : undefined,
         password: !password ? 'Password is required' : undefined,
-      },
-    });
-  }
-
-  // Validate email format
-  if (!validateEmail(email)) {
-    return res.status(400).json({
-      message: 'Invalid email format',
-      errors: {
-        email: 'Please enter a valid email address',
       },
     });
   }
