@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {api} from '../Api/api';
+import {api} from '../Api/api.js'; // Make sure this path is correct (capital A)
 
 export default function CreateIncidentModal({
   show,
@@ -7,7 +7,7 @@ export default function CreateIncidentModal({
   onSuccess,
   projects,
 }) {
-  const [modalStep, setModalStep] = useState(1); // 1 = incident form, 2 = attachments
+  const [modalStep, setModalStep] = useState(1);
   const [incidentId, setIncidentId] = useState(null);
 
   // Step 1: Incident form fields
@@ -24,37 +24,72 @@ export default function CreateIncidentModal({
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [errors, setErrors] = useState({}); // Add field-specific errors
 
   if (!show) return null;
 
   const handleCreateIncident = async (e) => {
     e.preventDefault();
     setError('');
+    setErrors({}); // Clear previous errors
 
-    if (!title.trim() || !projectId) {
-      setError('Title and Project are required');
+    // Client-side validation
+    if (!title.trim()) {
+      setErrors({title: 'Title is required'});
+      return;
+    }
+
+    if (!projectId) {
+      setErrors({project_id: 'Project is required'});
       return;
     }
 
     try {
       setCreating(true);
+      setError('');
+      setErrors({});
 
-      const response = await api.createIncident({
+      // Prepare data - don't send empty strings for optional fields
+      const incidentData = {
         title: title.trim(),
-        description: description.trim(),
         project_id: parseInt(projectId),
-        severity,
-        status,
-      });
+        severity: severity || 'low',
+        status: status || 'open',
+      };
+
+      // Only include description if it's not empty
+      if (description.trim()) {
+        incidentData.description = description.trim();
+      }
+
+      const response = await api.createIncident(incidentData);
+
+      // Handle different response structures
+      const incident_id =
+        response.data?.incident_id || response.data?.data?.incident_id;
+
+      if (!incident_id) {
+        throw new Error('Failed to get incident ID from response');
+      }
 
       // Store the created incident ID and move to step 2
-      setIncidentId(response.data.incident_id);
+      setIncidentId(incident_id);
       setModalStep(2);
+      setError(''); // Clear any errors on success
     } catch (err) {
-      setError(
+      console.error('Create incident error:', err);
+
+      // Handle field-specific errors from backend
+      if (err.response?.data?.errors) {
+        setErrors(err.response.data.errors);
+      }
+
+      // Handle general error message
+      const errorMessage =
         err.response?.data?.message ||
-          'Failed to create incident. Please try again.'
-      );
+        err.message ||
+        'Failed to create incident. Please try again.';
+      setError(errorMessage);
     } finally {
       setCreating(false);
     }
@@ -70,12 +105,15 @@ export default function CreateIncidentModal({
 
     try {
       setUploading(true);
+      setError('');
+
       await api.addIncidentAttachment(incidentId, files);
 
       // Close modal and notify parent
       handleClose();
       onSuccess();
     } catch (err) {
+      console.error('Attachment upload error:', err);
       setError(
         err.response?.data?.message ||
           'Failed to upload attachments. Please try again.'
@@ -113,6 +151,7 @@ export default function CreateIncidentModal({
     setFiles([]);
     setFileInputKey((prev) => prev + 1);
     setError('');
+    setErrors({});
     onClose();
   };
 
@@ -160,15 +199,25 @@ export default function CreateIncidentModal({
                     </label>
                     <input
                       type="text"
-                      className="form-control"
+                      className={`form-control ${
+                        errors.title ? 'is-invalid' : ''
+                      }`}
                       id="incidentTitle"
                       value={title}
-                      onChange={(e) => setTitle(e.target.value)}
+                      onChange={(e) => {
+                        setTitle(e.target.value);
+                        if (errors.title) {
+                          setErrors({...errors, title: ''});
+                        }
+                      }}
                       placeholder="Enter incident title"
                       required
                       disabled={creating}
                       maxLength={80}
                     />
+                    {errors.title && (
+                      <div className="invalid-feedback">{errors.title}</div>
+                    )}
                   </div>
 
                   <div className="mb-3">
@@ -179,14 +228,27 @@ export default function CreateIncidentModal({
                       Description
                     </label>
                     <textarea
-                      className="form-control"
+                      className={`form-control ${
+                        errors.description ? 'is-invalid' : ''
+                      }`}
                       id="incidentDescription"
                       value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Enter incident description"
+                      onChange={(e) => {
+                        setDescription(e.target.value);
+                        if (errors.description) {
+                          setErrors({...errors, description: ''});
+                        }
+                      }}
+                      placeholder="Enter incident description (optional)"
                       rows="4"
                       disabled={creating}
+                      maxLength={5000}
                     />
+                    {errors.description && (
+                      <div className="invalid-feedback">
+                        {errors.description}
+                      </div>
+                    )}
                   </div>
 
                   <div className="mb-3">
@@ -197,23 +259,39 @@ export default function CreateIncidentModal({
                       Project <span className="text-danger">*</span>
                     </label>
                     <select
-                      className="form-select"
+                      className={`form-select ${
+                        errors.project_id ? 'is-invalid' : ''
+                      }`}
                       id="incidentProject"
                       value={projectId}
-                      onChange={(e) => setProjectId(e.target.value)}
+                      onChange={(e) => {
+                        setProjectId(e.target.value);
+                        if (errors.project_id) {
+                          setErrors({...errors, project_id: ''});
+                        }
+                      }}
                       required
                       disabled={creating}
                     >
                       <option value="">Select a project</option>
-                      {projects.map((project) => (
-                        <option
-                          key={project.project_id}
-                          value={project.project_id}
-                        >
-                          {project.project_name} - {project.location}
-                        </option>
-                      ))}
+                      {projects && projects.length > 0 ? (
+                        projects.map((project) => (
+                          <option
+                            key={project.project_id}
+                            value={project.project_id}
+                          >
+                            {project.project_name} - {project.location}
+                          </option>
+                        ))
+                      ) : (
+                        <option disabled>No projects available</option>
+                      )}
                     </select>
+                    {errors.project_id && (
+                      <div className="invalid-feedback">
+                        {errors.project_id}
+                      </div>
+                    )}
                   </div>
 
                   <div className="row">
@@ -226,16 +304,28 @@ export default function CreateIncidentModal({
                           Severity
                         </label>
                         <select
-                          className="form-select"
+                          className={`form-select ${
+                            errors.severity ? 'is-invalid' : ''
+                          }`}
                           id="incidentSeverity"
                           value={severity}
-                          onChange={(e) => setSeverity(e.target.value)}
+                          onChange={(e) => {
+                            setSeverity(e.target.value);
+                            if (errors.severity) {
+                              setErrors({...errors, severity: ''});
+                            }
+                          }}
                           disabled={creating}
                         >
                           <option value="low">Low</option>
                           <option value="moderate">Moderate</option>
                           <option value="high">High</option>
                         </select>
+                        {errors.severity && (
+                          <div className="invalid-feedback">
+                            {errors.severity}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="col-md-6">
@@ -247,15 +337,27 @@ export default function CreateIncidentModal({
                           Status
                         </label>
                         <select
-                          className="form-select"
+                          className={`form-select ${
+                            errors.status ? 'is-invalid' : ''
+                          }`}
                           id="incidentStatus"
                           value={status}
-                          onChange={(e) => setStatus(e.target.value)}
+                          onChange={(e) => {
+                            setStatus(e.target.value);
+                            if (errors.status) {
+                              setErrors({...errors, status: ''});
+                            }
+                          }}
                           disabled={creating}
                         >
                           <option value="open">Open</option>
                           <option value="closed">Closed</option>
                         </select>
+                        {errors.status && (
+                          <div className="invalid-feedback">
+                            {errors.status}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -327,10 +429,11 @@ export default function CreateIncidentModal({
                       multiple
                       onChange={handleFileChange}
                       disabled={uploading}
-                      accept="image/*"
+                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,application/pdf,text/plain,.doc,.docx"
                     />
                     <small className="form-text text-muted">
-                      You can select multiple files (up to 10)
+                      You can select multiple files (up to 10). Allowed: Images,
+                      PDF, Word documents
                     </small>
                   </div>
 
@@ -343,7 +446,9 @@ export default function CreateIncidentModal({
                             key={index}
                             className="list-group-item d-flex justify-content-between align-items-center"
                           >
-                            <span>{file.name}</span>
+                            <span>
+                              {file.name} ({(file.size / 1024).toFixed(2)} KB)
+                            </span>
                             <button
                               type="button"
                               className="btn btn-sm btn-outline-danger"

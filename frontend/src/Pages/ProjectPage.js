@@ -24,7 +24,9 @@ export default function ProjectPage() {
       setLoading(true);
       setError(' ');
       const response = await api.getAllProjects();
-      setProjects(response.data);
+      // Handle paginated response
+      const data = response.data.projects || response.data;
+      setProjects(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(
         err.response?.data?.message ||
