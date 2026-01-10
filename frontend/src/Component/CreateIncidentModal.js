@@ -1,6 +1,33 @@
 import {useState} from 'react';
 import {api} from '../Api/api.js'; // Make sure this path is correct (capital A)
 
+// File upload constants
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB per file
+const MAX_TOTAL_SIZE = 200 * 1024 * 1024; // 200MB total
+const MAX_FILE_COUNT = 10;
+
+// Allowed file types
+const ALLOWED_FILE_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'application/pdf',
+  'text/plain',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+
+// Helper function to format file size
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+};
+
 export default function CreateIncidentModal({
   show,
   onClose,
@@ -20,6 +47,7 @@ export default function CreateIncidentModal({
   // Step 2: Attachment fields
   const [files, setFiles] = useState([]);
   const [fileInputKey, setFileInputKey] = useState(0);
+  const [fileErrors, setFileErrors] = useState([]); // File-specific validation errors
 
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -95,6 +123,60 @@ export default function CreateIncidentModal({
     }
   };
 
+  // Validate files before adding them
+  const validateFiles = (filesToValidate) => {
+    const errors = [];
+    let totalSize = 0;
+
+    // Check total file count
+    if (filesToValidate.length > MAX_FILE_COUNT) {
+      errors.push(
+        `Maximum ${MAX_FILE_COUNT} files allowed. You selected ${filesToValidate.length} files.`
+      );
+      return errors; // Return early if count exceeds
+    }
+
+    // Validate each file
+    filesToValidate.forEach((file, index) => {
+      // Check individual file size
+      if (file.size > MAX_FILE_SIZE) {
+        errors.push(
+          `"${file.name}" is too large (${formatFileSize(
+            file.size
+          )}). Maximum size is ${formatFileSize(MAX_FILE_SIZE)}.`
+        );
+      }
+
+      // Check file type
+      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        errors.push(
+          `"${file.name}" has an invalid file type (${
+            file.type || fileExtension
+          }). Allowed types: Images (JPEG, PNG, GIF, WebP), PDF, Word documents, and text files.`
+        );
+      }
+
+      // Accumulate total size
+      if (file.size <= MAX_FILE_SIZE) {
+        totalSize += file.size;
+      }
+    });
+
+    // Check total size
+    if (totalSize > MAX_TOTAL_SIZE) {
+      errors.push(
+        `Total file size (${formatFileSize(
+          totalSize
+        )}) exceeds the maximum allowed size of ${formatFileSize(
+          MAX_TOTAL_SIZE
+        )}.`
+      );
+    }
+
+    return errors;
+  };
+
   const handleAddAttachments = async () => {
     if (files.length === 0) {
       // Skip attachments, close modal
@@ -103,9 +185,18 @@ export default function CreateIncidentModal({
       return;
     }
 
+    // Final validation before upload
+    const validationErrors = validateFiles(files);
+    if (validationErrors.length > 0) {
+      setFileErrors(validationErrors);
+      setError('Please fix the file errors before uploading.');
+      return;
+    }
+
     try {
       setUploading(true);
       setError('');
+      setFileErrors([]);
 
       await api.addIncidentAttachment(incidentId, files);
 
@@ -130,7 +221,42 @@ export default function CreateIncidentModal({
 
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
-    setFiles(selectedFiles);
+
+    // Clear previous errors
+    setFileErrors([]);
+    setError('');
+
+    if (selectedFiles.length === 0) {
+      e.target.value = ''; // Reset input
+      return;
+    }
+
+    // Combine with existing files to check total count
+    const combinedFiles = [...files, ...selectedFiles];
+
+    // Validate file count first
+    if (combinedFiles.length > MAX_FILE_COUNT) {
+      const errorMsg = `Maximum ${MAX_FILE_COUNT} files allowed. You currently have ${files.length} file(s) and are trying to add ${selectedFiles.length} more.`;
+      setFileErrors([errorMsg]);
+      setError(errorMsg);
+      e.target.value = ''; // Clear input
+      return;
+    }
+
+    // Validate the selected files
+    const validationErrors = validateFiles(combinedFiles);
+
+    if (validationErrors.length > 0) {
+      setFileErrors(validationErrors);
+      setError('Some files failed validation. Please check the errors below.');
+      e.target.value = ''; // Clear input
+      return;
+    }
+
+    // All validations passed, add files
+    setFiles(combinedFiles);
+    setFileErrors([]);
+    setError('');
   };
 
   const handleRemoveFile = (index) => {
@@ -152,6 +278,7 @@ export default function CreateIncidentModal({
     setFileInputKey((prev) => prev + 1);
     setError('');
     setErrors({});
+    setFileErrors([]);
     onClose();
   };
 
@@ -424,7 +551,9 @@ export default function CreateIncidentModal({
                     <input
                       key={fileInputKey}
                       type="file"
-                      className="form-control"
+                      className={`form-control ${
+                        fileErrors.length > 0 ? 'is-invalid' : ''
+                      }`}
                       id="incidentFiles"
                       multiple
                       onChange={handleFileChange}
@@ -432,34 +561,80 @@ export default function CreateIncidentModal({
                       accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,application/pdf,text/plain,.doc,.docx"
                     />
                     <small className="form-text text-muted">
-                      You can select multiple files (up to 10). Allowed: Images,
-                      PDF, Word documents
+                      You can select multiple files (up to {MAX_FILE_COUNT}).
+                      Maximum {formatFileSize(MAX_FILE_SIZE)} per file,
+                      {formatFileSize(MAX_TOTAL_SIZE)} total. Allowed: Images
+                      (JPEG, PNG, GIF, WebP), PDF, Word documents, and text
+                      files.
                     </small>
+                    {fileErrors.length > 0 && (
+                      <div className="invalid-feedback d-block">
+                        <ul className="mb-0 small">
+                          {fileErrors.map((err, index) => (
+                            <li key={index}>{err}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
 
                   {files.length > 0 && (
                     <div className="mb-3">
-                      <label className="form-label">Selected Files:</label>
+                      <label className="form-label">
+                        Selected Files ({files.length}/{MAX_FILE_COUNT}):
+                      </label>
                       <ul className="list-group">
-                        {files.map((file, index) => (
-                          <li
-                            key={index}
-                            className="list-group-item d-flex justify-content-between align-items-center"
-                          >
-                            <span>
-                              {file.name} ({(file.size / 1024).toFixed(2)} KB)
-                            </span>
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-outline-danger"
-                              onClick={() => handleRemoveFile(index)}
-                              disabled={uploading}
+                        {files.map((file, index) => {
+                          const isValidSize = file.size <= MAX_FILE_SIZE;
+                          const isValidType = ALLOWED_FILE_TYPES.includes(
+                            file.type
+                          );
+                          return (
+                            <li
+                              key={index}
+                              className={`list-group-item d-flex justify-content-between align-items-center ${
+                                !isValidSize || !isValidType
+                                  ? 'list-group-item-danger'
+                                  : ''
+                              }`}
                             >
-                              <i className="bi bi-x-circle"></i> Remove
-                            </button>
-                          </li>
-                        ))}
+                              <div className="flex-grow-1">
+                                <div className="fw-semibold">{file.name}</div>
+                                <small className="text-muted">
+                                  {formatFileSize(file.size)}
+                                  {!isValidSize && (
+                                    <span className="text-danger ms-2">
+                                      (Exceeds size limit)
+                                    </span>
+                                  )}
+                                  {!isValidType && (
+                                    <span className="text-danger ms-2">
+                                      (Invalid file type)
+                                    </span>
+                                  )}
+                                </small>
+                              </div>
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-danger ms-2"
+                                onClick={() => handleRemoveFile(index)}
+                                disabled={uploading}
+                              >
+                                <i className="bi bi-x-circle"></i> Remove
+                              </button>
+                            </li>
+                          );
+                        })}
                       </ul>
+                      <div className="mt-2">
+                        <small className="text-muted">
+                          Total size:{' '}
+                          {formatFileSize(
+                            files.reduce((sum, file) => sum + file.size, 0)
+                          )}{' '}
+                          / {formatFileSize(MAX_TOTAL_SIZE)}
+                        </small>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -476,7 +651,9 @@ export default function CreateIncidentModal({
                     type="button"
                     className="btn btn-primary"
                     onClick={handleAddAttachments}
-                    disabled={uploading || files.length === 0}
+                    disabled={
+                      uploading || files.length === 0 || fileErrors.length > 0
+                    }
                   >
                     {uploading ? (
                       <>
